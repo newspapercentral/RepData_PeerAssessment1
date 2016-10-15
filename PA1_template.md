@@ -10,8 +10,8 @@ keep_md: true
 
 I downloaded data from the Activity monitoring data set
 
-```{r setup, echo=TRUE}
 
+```r
 #download.file("https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip", "data.zip")
 #unzip("data.zip")
 data <-read.csv("activity.csv")
@@ -21,44 +21,54 @@ data <-read.csv("activity.csv")
 
 First, I look analyzed the total number of steps per day.
 
-```{r total_steps, echo=TRUE}
+
+```r
 #Total Steps
 dataComplete <- data[complete.cases(data$steps),]
 totalSteps <- aggregate(dataComplete$steps, list(date= dataComplete$date) , "sum")
 hist(totalSteps$x, main="Histogram of Steps by Date", xlab="Steps by Date")
+```
 
+![plot of chunk total_steps](figure/total_steps-1.png)
+
+```r
 meanStepsPerDay <- mean(totalSteps$x)
 medianStepsPerDay <- median(totalSteps$x)
 
 #Format numbers for output
 meanSteps <- formatC(meanStepsPerDay, format="d", big.mark=',')
 medSteps <- formatC(medianStepsPerDay, format="d", big.mark=',')
-
 ```
 
-The following histogram shows the frequency of steps per day. The mean and median steps per day is: `r meanSteps` and `r medSteps` respectively.
+The following histogram shows the frequency of steps per day. The mean and median steps per day is: 10,766 and 10,765 respectively.
 
 #III. Average Daily Activity Pattern
 
 Next, I look at the average daily activity pattern to compare intervals across all days.
 
-```{r average_daily_pattern, echo=TRUE}
+
+```r
 #Average Daily Activity Pattern
 activityPattern <- aggregate(dataComplete$steps, list(interval = dataComplete$interval) , "mean")
 plot(activityPattern$interval, activityPattern$x, type="l", 
      main="Average Daily Activity Pattern",
      xlab= "Interval",
      ylab= "Average Number of Steps per Day")
+```
 
+![plot of chunk average_daily_pattern](figure/average_daily_pattern-1.png)
+
+```r
 #Max interval
 maxInterval <- activityPattern[activityPattern$x == max(activityPattern$x), 1]
 ```
 
-Interval `r maxInterval` has the highest average activity.
+Interval 835 has the highest average activity.
 
 #IV. Missing Values
 
-```{r missing_values, echo=TRUE}
+
+```r
 #Total Missing Values
 dateNA <- nrow(data[is.na(data$date),])
 intervalNA <- nrow(data[is.na(data$interval),])
@@ -67,13 +77,14 @@ stepsNA <- nrow(data[is.na(data$steps),])
 
 The data set has 3 columns: steps, interval, and date and have the following total of NA cells respectively
   
-  * `r stepsNA`
+  * 2304
   
-  * `r intervalNA`
+  * 0
   
-  * `r dateNA`
+  * 0
 
-```{r inpute_values, echo=TRUE}
+
+```r
 #Impute Missing Data
 meanStepsList <- aggregate(dataComplete$steps, list(date= dataComplete$date) , mean)
 names(meanStepsList)[2] <- "avgSteps"
@@ -84,10 +95,20 @@ dataWithDailyAvg <- merge(data, meanStepsList, "date")
 dataWithDailyAvg[is.na(dataWithDailyAvg$steps),] <- dataWithDailyAvg[is.na(dataWithDailyAvg$avgSteps),] 
 #Prove there are zero NAs
 nrow(dataWithDailyAvg[is.na(dataWithDailyAvg$steps),])
+```
 
+```
+## [1] 0
+```
+
+```r
 totalStepsImputed <- aggregate(dataWithDailyAvg$steps, list(date= dataWithDailyAvg$date) , "sum")
 hist(totalStepsImputed$x, main="Histogram of Steps by Date with Imputed Data", xlab="Steps by Date")
+```
 
+![plot of chunk inpute_values](figure/inpute_values-1.png)
+
+```r
 meanStepsPerDayImputed <- mean(totalStepsImputed$x)
 medianStepsPerDayImputed <- median(totalStepsImputed$x)
 
@@ -95,12 +116,12 @@ medianStepsPerDayImputed <- median(totalStepsImputed$x)
 meanImpSteps <- formatC(meanStepsPerDayImputed, format="d", big.mark=',')
 medImpSteps <- formatC(medianStepsPerDayImputed, format="d", big.mark=',')
 ```
-The following histogram shows the frequency of steps per day. The mean and median steps per day is: `r meanImpSteps` and `r medImpSteps` respectively.
+The following histogram shows the frequency of steps per day. The mean and median steps per day is: 10,766 and 10,765 respectively.
 
 ##Comparison to Original Data
 
-```{r compare_impute, echo=TRUE}
 
+```r
 par(mfrow=c(2,1))
 #Original data histogram
 hist(totalSteps$x, main="Histogram of Steps by Date", xlab="Steps by Date")
@@ -109,19 +130,18 @@ hist(totalSteps$x, main="Histogram of Steps by Date", xlab="Steps by Date")
 hist(totalStepsImputed$x, main="Histogram of Steps by Date with Imputed Data", xlab="Steps by Date")
 ```
 
-The mean does not change: `r meanSteps` to `r meanImpSteps`
+![plot of chunk compare_impute](figure/compare_impute-1.png)
 
-The median does not change: `r medSteps` to `r medImpSteps`
+The mean does not change: 10,766 to 10,766
+
+The median does not change: 10,765 to 10,765
 
 #V. Weekday vs. Weekends
 
-```{r , echo=TRUE, include=FALSE}
-library(dplyr)
 
-```
 
-```{r date_type, echo=TRUE}
 
+```r
 #Create new factor variable for weekend/weekday
 dateType <- weekdays(as.Date(factor(dataWithDailyAvg$date)))
 dateTypeData <- mutate(dataWithDailyAvg, dateType= ifelse(dateType %in% c("Saturday", "Sunday"), "weekend", "weekday"))
@@ -140,7 +160,8 @@ plot(activityPattern$interval, activityPattern$x, type="l", xlab= "", ylab= "")
 
 #Format Panel
 title(main="Average Weekday Activity Pattern", xlab= "Interval", ylab= "Average Number of Steps per Day", outer=TRUE)
-
 ```
+
+![plot of chunk date_type](figure/date_type-1.png)
 
 The activity on the weeday peaks in the morning, but reamains low for the rest of the day while the activity on the weekends also peaks in the morning around the same time, but stays at that level throughout the day. This suggests that on average, there is more activity on the weekend than the weekday.
